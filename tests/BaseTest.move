@@ -3,7 +3,7 @@ module SuiTrack::BaseTest {
     //use Std::ASCII;
     use Sui::TestScenario;
     use Std::Debug;
-    use SuiTrack::Base::{Self as Track, Service, ServiceTracker, Tracker,accounts_created};
+    use SuiTrack::Base::{Self as Track, Service, ServiceTracker, Tracker};
     //use Sui::ID::{VersionedID};
 
     // create test address representing tracking admin
@@ -35,7 +35,7 @@ module SuiTrack::BaseTest {
             let strack = TestScenario::take_owned<ServiceTracker>(scenario);
 
             assert!(accounts_created(&strack)==0,1);
-            Track::initialize(
+            Track::create_account(
                 TestScenario::borrow(&service),
                 &mut strack,
                 USER_ADDRESS,

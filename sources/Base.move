@@ -20,9 +20,6 @@ module SuiTrack::Base {
     /// Validate that the address provided is the
     /// owner of the program
     fun is_owner(self: &Service, owner:address): bool {
-        //Debug::print(&owner);
-        //let isa: bool = self.admin == owner;
-        //Debug::print(&isa);
         self.admin == owner
     }
 
@@ -34,10 +31,12 @@ module SuiTrack::Base {
     }
 
 
+    /// Bump number of accounts created
     fun increase_account(self: &mut ServiceTracker) {
         self.count_accounts = self.count_accounts + 1;
     }
 
+    /// Return the number of accounts created
     public fun accounts_created(self: &ServiceTracker) : u64 {
         self.count_accounts
     }
@@ -70,7 +69,7 @@ module SuiTrack::Base {
     }
 
     // Entrypoint: Initialize user account
-    public(script) fun initialize(
+    public(script) fun create_account(
         //use Std::Debug;
         service: &Service,
         strack: &mut ServiceTracker,
