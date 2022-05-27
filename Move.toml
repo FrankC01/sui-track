@@ -1,0 +1,10 @@
+[package]
+name = "SuiTrack"
+version = "0.0.1"
+
+[dependencies]
+# Assuming the `sui` repository is at the same level as the package parent directory
+Sui = { local = "../sui/sui_programmability/framework/" }
+
+[addresses]
+SuiTrack = "0x0"
