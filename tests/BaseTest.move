@@ -18,8 +18,8 @@ module SuiTrack::BaseTest {
             Track::test_init(TestScenario::ctx(scenario));
 
         };
-        // second transaction to check if the forge has been created
-        // and has initial value of zero swords created
+        // second transaction to check if the meta tracker has been created
+        // and has initial value of zero trackers created
         TestScenario::next_tx(scenario, &ADMIN_ADDRESS);
         {
             let strack = TestScenario::take_owned<ServiceTracker>(scenario);
@@ -27,6 +27,7 @@ module SuiTrack::BaseTest {
             TestScenario::return_owned(scenario, strack);
         };
 
+        // third transaction to create a new tracker account
         TestScenario::next_tx(scenario, &ADMIN_ADDRESS);
         {
             let service = TestScenario::take_immutable<Service>(scenario);
@@ -43,9 +44,14 @@ module SuiTrack::BaseTest {
             TestScenario::return_immutable(scenario, service);
         };
 
+        // Fourth transaction to add to the accumulator
         TestScenario::next_tx(scenario,&USER_ADDRESS);
         {
             let accum = TestScenario::take_owned<Tracker>(scenario);
+            Debug::print(&accum);
+            Track::add_value(&mut accum, 1u8, TestScenario::ctx(scenario));
+            Debug::print(&accum);
+            Track::add_values(&mut accum, vector[2u8,3u8,4u8], TestScenario::ctx(scenario));
             Debug::print(&accum);
             TestScenario::return_owned(scenario, accum)
         }

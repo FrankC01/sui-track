@@ -2,7 +2,7 @@
 /// Base module for hashblock
 module SuiTrack::Base {
     // use Sui::Coin::{Self, Coin};
-
+    use Std::Vector;
     use Sui::ID::VersionedID;
     use Sui::Transfer;
     use Sui::TxContext::{Self, TxContext};
@@ -10,6 +10,8 @@ module SuiTrack::Base {
     // Error codes
     /// Invalid admin
     const ServiceNotOwner: u64 = 0;
+    /// Invalid tracker owner
+    const TrackerNotOwner: u64 = 1;
 
     /// Master service setup at deploytime
     struct Service has key {
@@ -42,12 +44,36 @@ module SuiTrack::Base {
     }
 
     /// Individual account trackers
-    struct Tracker has key {
+    struct Tracker has key,store  {
         id: VersionedID,
         initialized: bool,
         owner: address,
+        accumulator: vector<u8>,
     }
 
+    /// Validate that the address provided is the
+    /// owner of the tracker
+    fun is_owned_by(self: &Tracker, owner:address): bool {
+        self.owner == owner
+    }
+
+    /// Get the accumulator length
+    public fun stored_count(self: &Tracker) : u64 {
+        Vector::length<u8>(&self.accumulator)
+    }
+
+    /// Add an element to the accumulator
+    public fun add_to_store(self: &mut Tracker, value: u8) : u64 {
+        Vector::push_back<u8>(&mut self.accumulator, value);
+        stored_count(self)
+    }
+
+    /// Add a series of vaues to the accumulator
+    public fun add_from(self: &mut Tracker, other:vector<u8>) {
+        Vector::append<u8>(&mut self.accumulator, other);
+    }
+
+    // Transaction Entry Points
     /// Initialize new deployment
     fun init(ctx: &mut TxContext) {
         let sender = TxContext::sender(ctx);
@@ -89,9 +115,25 @@ module SuiTrack::Base {
                 id: TxContext::new_id(ctx),
                 initialized: true,
                 owner: recipient,
+                accumulator: vector[],
             },
             recipient
         );
+    }
+
+    /// Add single value to accumulator
+    public(script) fun add_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+        // Verify ownership
+        let admin = TxContext::sender(ctx);
+        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
+        add_to_store(tracker,value);
+    }
+
+    /// Add multiple values to accumulator
+    public(script) fun add_values(tracker: &mut Tracker, values: vector<u8>, ctx: &mut TxContext) {
+        let admin = TxContext::sender(ctx);
+        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
+        add_from(tracker, values);
     }
 
     #[test_only]
