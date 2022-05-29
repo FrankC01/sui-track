@@ -30,7 +30,7 @@ module SuiTrack::Base {
     }
 
     /// Master service tracker
-    struct ServiceTracker has key, store {
+    struct ServiceTracker has key {
         id: VersionedID,
         initialized: bool,
         count_accounts: u64,
@@ -48,7 +48,7 @@ module SuiTrack::Base {
     }
 
     /// Individual account trackers
-    struct Tracker has key,store  {
+    struct Tracker has key  {
         id: VersionedID,
         initialized: bool,
         owner: address,
