@@ -44,7 +44,7 @@ module SuiTrack::BaseTest {
             TestScenario::return_immutable(scenario, service);
         };
 
-        // Fourth transaction to add to the accumulator
+        // Fourth transaction to manipulate the accumulator
         TestScenario::next_tx(scenario,&USER_ADDRESS);
         {
             let accum = TestScenario::take_owned<Tracker>(scenario);
@@ -52,6 +52,8 @@ module SuiTrack::BaseTest {
             Track::add_value(&mut accum, 1u8, TestScenario::ctx(scenario));
             Debug::print(&accum);
             Track::add_values(&mut accum, vector[2u8,3u8,4u8], TestScenario::ctx(scenario));
+            Debug::print(&accum);
+            Track::remove_value(&mut accum, 3u8, TestScenario::ctx(scenario));
             Debug::print(&accum);
             TestScenario::return_owned(scenario, accum)
         }

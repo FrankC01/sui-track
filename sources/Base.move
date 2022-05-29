@@ -12,6 +12,10 @@ module SuiTrack::Base {
     const ServiceNotOwner: u64 = 0;
     /// Invalid tracker owner
     const TrackerNotOwner: u64 = 1;
+    /// Does not contain value
+    const DoesNotExist: u64 = 2;
+    /// Wrong value removed
+    const ValueDropMismatch: u64 = 3;
 
     /// Master service setup at deploytime
     struct Service has key {
@@ -73,6 +77,18 @@ module SuiTrack::Base {
         Vector::append<u8>(&mut self.accumulator, other);
     }
 
+    /// Check accumulator contains value
+    public fun has_value(self: &Tracker, value: u8) : bool {
+        Vector::contains<u8>(&self.accumulator, &value)
+    }
+
+    /// Removes a value from the accumulator
+    public fun drop_from_store(self: &mut Tracker, value: u8) : u8 {
+        let (contained, idx) = Vector::index_of<u8>(&self.accumulator, &value);
+        assert!(contained, DoesNotExist);
+        Vector::remove<u8>(&mut self.accumulator, idx)
+    }
+
     // Transaction Entry Points
     /// Initialize new deployment
     fun init(ctx: &mut TxContext) {
@@ -129,6 +145,14 @@ module SuiTrack::Base {
         add_to_store(tracker,value);
     }
 
+    /// Add single value to accumulator
+    public(script) fun remove_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+        // Verify ownership
+        let admin = TxContext::sender(ctx);
+        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
+        assert!(drop_from_store(tracker, value) == value,ValueDropMismatch);
+
+    }
     /// Add multiple values to accumulator
     public(script) fun add_values(tracker: &mut Tracker, values: vector<u8>, ctx: &mut TxContext) {
         let admin = TxContext::sender(ctx);
