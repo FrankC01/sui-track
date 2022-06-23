@@ -1,11 +1,11 @@
 
 /// Base module for hashblock
-module SuiTrack::Base {
+module suitrack::base {
     // use Sui::Coin::{Self, Coin};
-    use Std::Vector;
-    use Sui::ID::VersionedID;
-    use Sui::Transfer;
-    use Sui::TxContext::{Self, TxContext};
+    use sui::transfer;
+    use std::vector;
+    use sui::id::VersionedID;
+    use sui::tx_context::{Self, TxContext};
 
     // Error codes
     /// Invalid admin
@@ -63,55 +63,55 @@ module SuiTrack::Base {
 
     /// Get the accumulator length
     public fun stored_count(self: &Tracker) : u64 {
-        Vector::length<u8>(&self.accumulator)
+        vector::length<u8>(&self.accumulator)
     }
 
     /// Add an element to the accumulator
     public fun add_to_store(self: &mut Tracker, value: u8) : u64 {
-        Vector::push_back<u8>(&mut self.accumulator, value);
+        vector::push_back<u8>(&mut self.accumulator, value);
         stored_count(self)
     }
 
     /// Add a series of vaues to the accumulator
     public fun add_from(self: &mut Tracker, other:vector<u8>) {
-        Vector::append<u8>(&mut self.accumulator, other);
+        vector::append<u8>(&mut self.accumulator, other);
     }
 
     /// Check accumulator contains value
     public fun has_value(self: &Tracker, value: u8) : bool {
-        Vector::contains<u8>(&self.accumulator, &value)
+        vector::contains<u8>(&self.accumulator, &value)
     }
 
     /// Removes a value from the accumulator
     public fun drop_from_store(self: &mut Tracker, value: u8) : u8 {
-        let (contained, idx) = Vector::index_of<u8>(&self.accumulator, &value);
+        let (contained, idx) = vector::index_of<u8>(&self.accumulator, &value);
         assert!(contained, DoesNotExist);
-        Vector::remove<u8>(&mut self.accumulator, idx)
+        vector::remove<u8>(&mut self.accumulator, idx)
     }
 
     // Transaction Entry Points
     /// Initialize new deployment
     fun init(ctx: &mut TxContext) {
-        let sender = TxContext::sender(ctx);
-        let id = TxContext::new_id(ctx);
+        let sender = tx_context::sender(ctx);
+        let id = tx_context::new_id(ctx);
         // Establish authority and make it immutable
-        Transfer::freeze_object(Service {
+        transfer::freeze_object(Service {
             id,
             admin: sender,
         });
         // Authority tracker
-        Transfer::transfer(
+        transfer::transfer(
             ServiceTracker {
-                id: TxContext::new_id(ctx),
+                id: tx_context::new_id(ctx),
                 initialized: true,
                 count_accounts: 0,
             },
-            TxContext::sender(ctx)
+            tx_context::sender(ctx)
         )
     }
 
     // Entrypoint: Initialize user account
-    public(script) fun create_account(
+    public entry fun create_account(
         //use Std::Debug;
         service: &Service,
         strack: &mut ServiceTracker,
@@ -119,16 +119,16 @@ module SuiTrack::Base {
         ctx: &mut TxContext
         ) {
         // Verify ownership
-        let admin = TxContext::sender(ctx);
+        let admin = tx_context::sender(ctx);
         assert!(is_owner(service, admin), ServiceNotOwner);
 
         // Increase the account count
         increase_account(strack);
 
         // Create unique account tracker for reeipient
-        Transfer::transfer(
+        transfer::transfer(
             Tracker {
-                id: TxContext::new_id(ctx),
+                id: tx_context::new_id(ctx),
                 initialized: true,
                 owner: recipient,
                 accumulator: vector[],
@@ -138,24 +138,24 @@ module SuiTrack::Base {
     }
 
     /// Add single value to accumulator
-    public(script) fun add_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+    public entry fun add_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
         // Verify ownership
-        let admin = TxContext::sender(ctx);
+        let admin = tx_context::sender(ctx);
         assert!(is_owned_by(tracker, admin), TrackerNotOwner);
         add_to_store(tracker,value);
     }
 
     /// Add single value to accumulator
-    public(script) fun remove_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+    public entry fun remove_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
         // Verify ownership
-        let admin = TxContext::sender(ctx);
+        let admin = tx_context::sender(ctx);
         assert!(is_owned_by(tracker, admin), TrackerNotOwner);
         assert!(drop_from_store(tracker, value) == value,ValueDropMismatch);
 
     }
     /// Add multiple values to accumulator
-    public(script) fun add_values(tracker: &mut Tracker, values: vector<u8>, ctx: &mut TxContext) {
-        let admin = TxContext::sender(ctx);
+    public entry fun add_values(tracker: &mut Tracker, values: vector<u8>, ctx: &mut TxContext) {
+        let admin = tx_context::sender(ctx);
         assert!(is_owned_by(tracker, admin), TrackerNotOwner);
         add_from(tracker, values);
     }

@@ -7,4 +7,4 @@ version = "0.0.1"
 Sui = { local = "../sui/crates/sui-framework/" }
 
 [addresses]
-SuiTrack = "0x0"
+suitrack = "0x0"
