@@ -4,7 +4,7 @@ module suitrack::base {
     // use Sui::Coin::{Self, Coin};
     use sui::transfer;
     use std::vector;
-    use sui::id::VersionedID;
+    use sui::object::{Self, Info};
     use sui::tx_context::{Self, TxContext};
 
     // Error codes
@@ -19,7 +19,7 @@ module suitrack::base {
 
     /// Master service setup at deploytime
     struct Service has key {
-        id: VersionedID,
+        info: Info,
         admin: address,
     }
 
@@ -31,7 +31,7 @@ module suitrack::base {
 
     /// Master service tracker
     struct ServiceTracker has key {
-        id: VersionedID,
+        info: Info,
         initialized: bool,
         count_accounts: u64,
     }
@@ -49,7 +49,7 @@ module suitrack::base {
 
     /// Individual account trackers
     struct Tracker has key  {
-        id: VersionedID,
+        info: Info,
         initialized: bool,
         owner: address,
         accumulator: vector<u8>,
@@ -93,16 +93,16 @@ module suitrack::base {
     /// Initialize new deployment
     fun init(ctx: &mut TxContext) {
         let sender = tx_context::sender(ctx);
-        let id = tx_context::new_id(ctx);
+        let info = object::new(ctx);
         // Establish authority and make it immutable
         transfer::freeze_object(Service {
-            id,
+            info,
             admin: sender,
         });
         // Authority tracker
         transfer::transfer(
             ServiceTracker {
-                id: tx_context::new_id(ctx),
+                info: object::new(ctx),
                 initialized: true,
                 count_accounts: 0,
             },
@@ -128,7 +128,7 @@ module suitrack::base {
         // Create unique account tracker for reeipient
         transfer::transfer(
             Tracker {
-                id: tx_context::new_id(ctx),
+                info: object::new(ctx),
                 initialized: true,
                 owner: recipient,
                 accumulator: vector[],
