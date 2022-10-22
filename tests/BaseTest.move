@@ -1,62 +1,67 @@
 #[test_only]
 module suitrack::basetest {
-    //use Std::ASCII;
     use sui::test_scenario::{Self};
-    use std::debug;
-    use suitrack::base::{Self as Track, Service, ServiceTracker, Tracker, accounts_created};
-    //use Sui::ID::{VersionedID};
+    use std::debug::{Self as Debug};
+    use suitrack::base::{Self as Track,
+    Service,
+    ServiceTracker,
+    Tracker,
+    accounts_created
+    };
 
-    // create test address representing tracking admin
-    const ADMIN_ADDRESS:address = @0xABBA;
-    const USER_ADDRESS:address = @0xBAAB;
 
     #[test]
     public entry fun test_basic_pass() {
-        // first transaction to emulate module initialization
-        let scenario = &mut test_scenario::begin(&ADMIN_ADDRESS);
+    // create test address representing tracking admin
+        let admin:address = @0xABBA;
+        let user:address = @0xBAAB;
+        let scenario_val = test_scenario::begin(admin);
+        test_scenario::next_tx(&mut scenario_val, admin);
         {
-            Track::test_init(test_scenario::ctx(scenario));
-
+            Debug::print(&admin);
+            Track::test_init(test_scenario::ctx(&mut scenario_val));
         };
         // second transaction to check if the meta tracker has been created
         // and has initial value of zero trackers created
-        test_scenario::next_tx(scenario, &ADMIN_ADDRESS);
+        test_scenario::next_tx(&mut scenario_val, admin);
         {
-            let strack = test_scenario::take_owned<ServiceTracker>(scenario);
+            let strack = test_scenario::take_from_sender<ServiceTracker>(&mut scenario_val);
             assert!(accounts_created(&strack)==0,1);
-            test_scenario::return_owned(scenario, strack);
+            Debug::print(&strack);
+            test_scenario::return_to_sender(&mut scenario_val,strack);
         };
 
         // third transaction to create a new tracker account
-        test_scenario::next_tx(scenario, &ADMIN_ADDRESS);
+        test_scenario::next_tx(&mut scenario_val, admin);
         {
-            let service = test_scenario::take_immutable<Service>(scenario);
-            let strack = test_scenario::take_owned<ServiceTracker>(scenario);
-
+            let service = test_scenario::take_immutable<Service>(&mut scenario_val);
+            let strack = test_scenario::take_from_address<ServiceTracker>(&mut scenario_val, admin);
+            Debug::print(&service);
+            Debug::print(&strack);
             Track::create_account(
-                test_scenario::borrow(&service),
+                &service,
                 &mut strack,
-                USER_ADDRESS,
-                test_scenario::ctx(scenario));
+                user,
+                test_scenario::ctx(&mut scenario_val));
             assert!(accounts_created(&strack)==1,1);
-
-            test_scenario::return_owned(scenario, strack);
-            test_scenario::return_immutable(scenario, service);
+            test_scenario::return_to_address(admin, strack);
+            test_scenario::return_immutable(service);
         };
 
         // Fourth transaction to manipulate the accumulator
-        test_scenario::next_tx(scenario,&USER_ADDRESS);
+        test_scenario::next_tx(&mut scenario_val,user);
         {
-            let accum = test_scenario::take_owned<Tracker>(scenario);
-            debug::print(&accum);
-            Track::add_value(&mut accum, 1u8, test_scenario::ctx(scenario));
-            debug::print(&accum);
-            Track::add_values(&mut accum, vector[2u8,3u8,4u8], test_scenario::ctx(scenario));
-            debug::print(&accum);
-            Track::remove_value(&mut accum, 3u8, test_scenario::ctx(scenario));
-            debug::print(&accum);
-            test_scenario::return_owned(scenario, accum)
-        }
+            let accum = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
+            Debug::print(&accum);
+            Track::add_value(&mut accum, 1u8, test_scenario::ctx(&mut scenario_val));
+            Debug::print(&accum);
+            Track::add_values(&mut accum, vector[2u8,3u8,4u8], test_scenario::ctx(&mut scenario_val));
+            Debug::print(&accum);
+            Track::remove_value(&mut accum, 3u8, test_scenario::ctx(&mut scenario_val));
+            Debug::print(&accum);
+            test_scenario::return_to_sender(&mut scenario_val, accum)
+        };
+    test_scenario::end(scenario_val);
     }
 
 }

@@ -1,6 +1,6 @@
 [package]
 name = "SuiTrack"
-version = "0.0.1"
+version = "0.0.2"
 
 [dependencies]
 # Assuming the `sui` repository is at the same level as the package parent directory

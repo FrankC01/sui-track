@@ -1,5 +1,5 @@
 
-/// Base module for hashblock
+/// Base module for sui
 module suitrack::base {
     // use Sui::Coin::{Self, Coin};
     use sui::transfer;
