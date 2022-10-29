@@ -55,6 +55,10 @@ module suitrack::base {
         accumulator: vector<u8>,
     }
 
+    public entry fun transfer(object: Tracker, recipient: address) {
+        transfer::transfer(object, recipient)
+    }
+
     /// Validate that the address provided is the
     /// owner of the tracker
     fun is_owned_by(self: &Tracker, owner:address): bool {

@@ -1,5 +1,6 @@
 #[test_only]
 module suitrack::basetest {
+    use sui::transfer;
     use sui::test_scenario::{Self};
     use std::debug::{Self as Debug};
     use suitrack::base::{Self as Track,
@@ -60,6 +61,17 @@ module suitrack::basetest {
             Track::remove_value(&mut accum, 3u8, test_scenario::ctx(&mut scenario_val));
             Debug::print(&accum);
             test_scenario::return_to_sender(&mut scenario_val, accum)
+        };
+        test_scenario::next_tx(&mut scenario_val, user);
+        {
+            let object = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
+            transfer::transfer(object, admin);
+        };
+        test_scenario::next_tx(&mut scenario_val, admin);
+        {
+            let object = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
+            Debug::print(&object);
+            test_scenario::return_to_sender(&mut scenario_val, object)
         };
     test_scenario::end(scenario_val);
     }
