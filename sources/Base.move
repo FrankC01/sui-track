@@ -48,15 +48,21 @@ module suitrack::base {
     }
 
     /// Individual account trackers
-    struct Tracker has key  {
+    struct Tracker has key, store  {
         id: UID,
         initialized: bool,
         owner: address,
         accumulator: vector<u8>,
     }
 
-    public entry fun transfer(object: Tracker, recipient: address) {
-        transfer::transfer(object, recipient)
+    /// Set the trackers owner
+    fun set_tracker_owner(self: &mut Tracker, recipient: address) {
+         self.owner = recipient;
+    }
+
+    public fun transfer(tracker: Tracker, recipient: address) {
+        // set_tracker_owner(tracker,recipient);
+        transfer::transfer<Tracker>(tracker, recipient)
     }
 
     /// Validate that the address provided is the
