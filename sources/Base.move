@@ -51,24 +51,12 @@ module suitrack::base {
     struct Tracker has key, store  {
         id: UID,
         initialized: bool,
-        owner: address,
         accumulator: vector<u8>,
-    }
-
-    /// Set the trackers owner
-    fun set_tracker_owner(self: &mut Tracker, recipient: address) {
-         self.owner = recipient;
     }
 
     public fun transfer(tracker: Tracker, recipient: address) {
         // set_tracker_owner(tracker,recipient);
         transfer::transfer<Tracker>(tracker, recipient)
-    }
-
-    /// Validate that the address provided is the
-    /// owner of the tracker
-    fun is_owned_by(self: &Tracker, owner:address): bool {
-        self.owner == owner
     }
 
     /// Get the accumulator length
@@ -99,16 +87,18 @@ module suitrack::base {
         vector::remove<u8>(&mut self.accumulator, idx)
     }
 
-    // Transaction Entry Points
-    /// Initialize new deployment
-    fun init(ctx: &mut TxContext) {
+    public fun create_service(ctx: &mut TxContext) {
+        // Establish authority and make it immutable
         let sender = tx_context::sender(ctx);
         let id = object::new(ctx);
-        // Establish authority and make it immutable
         transfer::freeze_object(Service {
             id,
             admin: sender,
-        });
+        })
+    }
+    /// Create the service tracker for the owner/publisher of this contract
+    public fun create_service_tracker(ctx: &mut TxContext) {
+        let recipient = tx_context::sender(ctx);
         // Authority tracker
         transfer::transfer(
             ServiceTracker {
@@ -116,9 +106,16 @@ module suitrack::base {
                 initialized: true,
                 count_accounts: 0,
             },
-            tx_context::sender(ctx)
+            recipient
         )
     }
+    // Transaction Entry Points
+    /// Initialize new deployment
+    fun init(ctx: &mut TxContext) {
+        create_service(ctx);
+        create_service_tracker(ctx)
+    }
+
 
     // Entrypoint: Initialize user account
     public entry fun create_account(
@@ -140,7 +137,6 @@ module suitrack::base {
             Tracker {
                 id: object::new(ctx),
                 initialized: true,
-                owner: recipient,
                 accumulator: vector[],
             },
             recipient
@@ -148,32 +144,27 @@ module suitrack::base {
     }
 
     /// Add single value to accumulator
-    public entry fun add_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+    public entry fun add_value(tracker: &mut Tracker, value: u8, _ctx: &mut TxContext) {
         // Verify ownership
-        let admin = tx_context::sender(ctx);
-        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
         add_to_store(tracker,value);
     }
 
     /// Add single value to accumulator
-    public entry fun remove_value(tracker: &mut Tracker, value: u8, ctx: &mut TxContext) {
+    public entry fun remove_value(tracker: &mut Tracker, value: u8, _ctx: &mut TxContext) {
         // Verify ownership
-        let admin = tx_context::sender(ctx);
-        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
         assert!(drop_from_store(tracker, value) == value,ValueDropMismatch);
 
     }
     /// Add multiple values to accumulator
-    public entry fun add_values(tracker: &mut Tracker, values: vector<u8>, ctx: &mut TxContext) {
-        let admin = tx_context::sender(ctx);
-        assert!(is_owned_by(tracker, admin), TrackerNotOwner);
+    public entry fun add_values(tracker: &mut Tracker, values: vector<u8>, _ctx: &mut TxContext) {
         add_from(tracker, values);
     }
 
     #[test_only]
     /// Wrapper of module initializer for testing
     public fun test_init(ctx: &mut TxContext) {
-        init(ctx)
+        create_service(ctx);
+        create_service_tracker(ctx)
     }
 
 }

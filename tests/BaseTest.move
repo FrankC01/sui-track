@@ -17,34 +17,35 @@ module suitrack::basetest {
         let admin:address = @0xABBA;
         let user:address = @0xBAAB;
         let scenario_val = test_scenario::begin(admin);
+        // First transaction for initializing test
         test_scenario::next_tx(&mut scenario_val, admin);
         {
-            Debug::print(&admin);
-            Track::test_init(test_scenario::ctx(&mut scenario_val));
+            Track::test_init(test_scenario::ctx(&mut scenario_val))
         };
-        // second transaction to check if the meta tracker has been created
-        // and has initial value of zero trackers created
+        // second transaction to verify service and servicetracker created from init
         test_scenario::next_tx(&mut scenario_val, admin);
         {
+            let service = test_scenario::take_immutable<Service>(&mut scenario_val);
+            Debug::print(&service);
+            test_scenario::return_immutable(service);
             let strack = test_scenario::take_from_sender<ServiceTracker>(&mut scenario_val);
             assert!(accounts_created(&strack)==0,1);
             Debug::print(&strack);
-            test_scenario::return_to_sender(&mut scenario_val,strack);
-        };
+            test_scenario::return_to_sender(&mut scenario_val,strack)
 
+        };
         // third transaction to create a new tracker account
         test_scenario::next_tx(&mut scenario_val, admin);
         {
             let service = test_scenario::take_immutable<Service>(&mut scenario_val);
             let strack = test_scenario::take_from_address<ServiceTracker>(&mut scenario_val, admin);
-            Debug::print(&service);
-            Debug::print(&strack);
             Track::create_account(
                 &service,
                 &mut strack,
                 user,
                 test_scenario::ctx(&mut scenario_val));
             assert!(accounts_created(&strack)==1,1);
+            Debug::print(&strack);
             test_scenario::return_to_address(admin, strack);
             test_scenario::return_immutable(service);
         };
@@ -53,12 +54,16 @@ module suitrack::basetest {
         test_scenario::next_tx(&mut scenario_val,user);
         {
             let accum = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
+            // Should be emptry
             Debug::print(&accum);
             Track::add_value(&mut accum, 1u8, test_scenario::ctx(&mut scenario_val));
+            // Should have 1
             Debug::print(&accum);
             Track::add_values(&mut accum, vector[2u8,3u8,4u8], test_scenario::ctx(&mut scenario_val));
+            // Should have 4
             Debug::print(&accum);
             Track::remove_value(&mut accum, 3u8, test_scenario::ctx(&mut scenario_val));
+            // Should have 3 items with 3u8 entity missing
             Debug::print(&accum);
             test_scenario::return_to_sender(&mut scenario_val, accum)
         };
