@@ -5,6 +5,8 @@ module suitrack::base {
     use sui::transfer;
     use std::vector;
     use sui::object::{Self, UID};
+    use sui::dynamic_field;
+    use sui::dynamic_object_field;
     use sui::tx_context::{Self, TxContext};
 
     // Error codes
@@ -29,14 +31,41 @@ module suitrack::base {
         self.admin == owner
     }
 
+    struct TrackerField has key,store {
+        id: UID,
+    }
+
+    struct TrackerObjectField has key,store {
+        id: UID,
+    }
+
     /// Master service tracker
     struct ServiceTracker has key {
         id: UID,
         initialized: bool,
+        has_child_field: bool,
+        has_child_object_field: bool,
         count_accounts: u64,
     }
 
+    fun add_dynamic_field(self: &mut ServiceTracker,ctx: &mut TxContext) {
+        // let recipient = tx_context::sender(ctx);
+        let child = TrackerField {
+                id: object::new(ctx),
+            };
 
+        dynamic_field::add(&mut self.id,b"dyn_field",child);
+        // transfer::transfer(child,recipient);
+        self.has_child_field = true;
+    }
+
+    fun add_dynamic_object_field(self: &mut ServiceTracker,ctx: &mut TxContext) {
+        let child = TrackerObjectField {
+                id: object::new(ctx),
+            };
+        dynamic_object_field::add(&mut self.id,b"dyn_obj_field",child);
+        self.has_child_object_field = true;
+    }
     /// Bump number of accounts created
     fun increase_account(self: &mut ServiceTracker) {
         self.count_accounts = self.count_accounts + 1;
@@ -100,22 +129,29 @@ module suitrack::base {
     public fun create_service_tracker(ctx: &mut TxContext) {
         let recipient = tx_context::sender(ctx);
         // Authority tracker
-        transfer::transfer(
-            ServiceTracker {
+        let track = ServiceTracker {
                 id: object::new(ctx),
                 initialized: true,
+                has_child_field: false,
+                has_child_object_field:false,
                 count_accounts: 0,
-            },
-            recipient
-        )
+            };
+        transfer::transfer(track,recipient)
     }
+
     // Transaction Entry Points
     /// Initialize new deployment
     fun init(ctx: &mut TxContext) {
         create_service(ctx);
         create_service_tracker(ctx)
     }
+    public entry fun set_dynamic_field(strack: &mut ServiceTracker, ctx:&mut TxContext) {
+        add_dynamic_field(strack,ctx);
+    }
 
+    public entry fun set_dynamic_object_field(strack: &mut ServiceTracker, ctx:&mut TxContext) {
+        add_dynamic_object_field(strack,ctx);
+    }
 
     // Entrypoint: Initialize user account
     public entry fun create_account(

@@ -49,19 +49,35 @@ module suitrack::basetest {
             test_scenario::return_to_address(admin, strack);
             test_scenario::return_immutable(service);
         };
-
+        // Third step 2 Add both dynamic and dynamic object fields
+        test_scenario::next_tx(&mut scenario_val, admin);
+        {
+            let strack = test_scenario::take_from_address<ServiceTracker>(&mut scenario_val, admin);
+            Track::set_dynamic_field(&mut strack, test_scenario::ctx(&mut scenario_val));
+            Debug::print(&strack);
+            test_scenario::return_to_address(admin, strack);
+        };
+        // Third step 3 Add both dynamic and dynamic object fields
+        test_scenario::next_tx(&mut scenario_val, admin);
+        {
+            let strack = test_scenario::take_from_address<ServiceTracker>(&mut scenario_val, admin);
+            Debug::print(&strack);
+            Track::set_dynamic_object_field(&mut strack, test_scenario::ctx(&mut scenario_val));
+            Debug::print(&strack);
+            test_scenario::return_to_address(admin, strack);
+        };
         // Fourth transaction to manipulate the accumulator
         test_scenario::next_tx(&mut scenario_val,user);
         {
             let accum = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
             // Should be emptry
-            Debug::print(&accum);
+            // Debug::print(&accum);
             Track::add_value(&mut accum, 1u8, test_scenario::ctx(&mut scenario_val));
             // Should have 1
-            Debug::print(&accum);
+            // Debug::print(&accum);
             Track::add_values(&mut accum, vector[2u8,3u8,4u8], test_scenario::ctx(&mut scenario_val));
             // Should have 4
-            Debug::print(&accum);
+            // Debug::print(&accum);
             Track::remove_value(&mut accum, 3u8, test_scenario::ctx(&mut scenario_val));
             // Should have 3 items with 3u8 entity missing
             Debug::print(&accum);
@@ -75,7 +91,7 @@ module suitrack::basetest {
         test_scenario::next_tx(&mut scenario_val, admin);
         {
             let object = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
-            Debug::print(&object);
+            // Debug::print(&object);
             test_scenario::return_to_sender(&mut scenario_val, object)
         };
     test_scenario::end(scenario_val);
