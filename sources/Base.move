@@ -1,5 +1,6 @@
 
 /// Base module for sui
+/// Use for testing stuff
 module suitrack::base {
     // use Sui::Coin::{Self, Coin};
     use sui::transfer;
