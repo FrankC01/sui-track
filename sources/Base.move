@@ -144,7 +144,7 @@ module suitrack::base {
 
     // Transaction Entry Points
     /// Initialize new deployment
-    fun init(ctx: &mut TxContext) {
+    fun init(_inner: BASE,ctx: &mut TxContext) {
         create_service(ctx);
         create_service_tracker(ctx)
     }
