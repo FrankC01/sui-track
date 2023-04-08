@@ -20,6 +20,8 @@ module suitrack::base {
     /// Wrong value removed
     const ValueDropMismatch: u64 = 3;
 
+    struct BASE has drop {}
+
     /// Master service setup at deploytime
     struct Service has key {
         id: UID,
