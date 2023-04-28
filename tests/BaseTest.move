@@ -86,7 +86,7 @@ module suitrack::basetest {
         test_scenario::next_tx(&mut scenario_val, user);
         {
             let object = test_scenario::take_from_sender<Tracker>(&mut scenario_val);
-            transfer::transfer(object, admin);
+            transfer::public_transfer(object, admin);
         };
         test_scenario::next_tx(&mut scenario_val, admin);
         {

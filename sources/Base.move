@@ -51,6 +51,9 @@ module suitrack::base {
         count_accounts: u64,
     }
 
+    fun flip_bool(self: &mut ServiceTracker,inbound:bool) {
+        self.initialized = inbound
+    }
     fun add_dynamic_field(self: &mut ServiceTracker,ctx: &mut TxContext) {
         // let recipient = tx_context::sender(ctx);
         let child = TrackerField {
@@ -154,6 +157,10 @@ module suitrack::base {
 
     public entry fun set_dynamic_object_field(strack: &mut ServiceTracker, ctx:&mut TxContext) {
         add_dynamic_object_field(strack,ctx);
+    }
+
+    public entry fun set_boolean(strack: &mut ServiceTracker, arg:bool , _ctx:&mut TxContext) {
+        flip_bool(strack,arg)
     }
 
     // Entrypoint: Initialize user account
