@@ -11,8 +11,6 @@ module suitrack::base {
     use sui::tx_context::{Self, TxContext};
 
     // Error codes
-    /// Invalid admin
-    const ServiceNotOwner: u64 = 0;
     /// Invalid tracker owner
     const TrackerNotOwner: u64 = 1;
     /// Does not contain value
@@ -21,18 +19,6 @@ module suitrack::base {
     const ValueDropMismatch: u64 = 3;
 
     struct BASE has drop {}
-
-    /// Master service setup at deploytime
-    struct Service has key {
-        id: UID,
-        admin: address,
-    }
-
-    /// Validate that the address provided is the
-    /// owner of the program
-    fun is_owner(self: &Service, owner:address): bool {
-        self.admin == owner
-    }
 
     struct TrackerField has key,store {
         id: UID,
@@ -122,15 +108,6 @@ module suitrack::base {
         vector::remove<u8>(&mut self.accumulator, idx)
     }
 
-    public fun create_service(ctx: &mut TxContext) {
-        // Establish authority and make it immutable
-        let sender = tx_context::sender(ctx);
-        let id = object::new(ctx);
-        transfer::freeze_object(Service {
-            id,
-            admin: sender,
-        })
-    }
     /// Create the service tracker for the owner/publisher of this contract
     public fun create_service_tracker(ctx: &mut TxContext) {
         let recipient = tx_context::sender(ctx);
@@ -145,10 +122,10 @@ module suitrack::base {
         transfer::transfer(track,recipient)
     }
 
+    #[allow(unused_function)]
     // Transaction Entry Points
     /// Initialize new deployment
     fun init(_inner: BASE,ctx: &mut TxContext) {
-        create_service(ctx);
         create_service_tracker(ctx)
     }
     public entry fun set_dynamic_field(strack: &mut ServiceTracker, ctx:&mut TxContext) {
@@ -166,14 +143,10 @@ module suitrack::base {
     // Entrypoint: Initialize user account
     public entry fun create_account(
         //use Std::Debug;
-        service: &Service,
         strack: &mut ServiceTracker,
         recipient: address,
         ctx: &mut TxContext
         ) {
-        // Verify ownership
-        let admin = tx_context::sender(ctx);
-        assert!(is_owner(service, admin), ServiceNotOwner);
 
         // Increase the account count
         increase_account(strack);
@@ -209,7 +182,6 @@ module suitrack::base {
     #[test_only]
     /// Wrapper of module initializer for testing
     public fun test_init(ctx: &mut TxContext) {
-        create_service(ctx);
         create_service_tracker(ctx)
     }
 

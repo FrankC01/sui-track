@@ -4,7 +4,6 @@ module suitrack::basetest {
     use sui::test_scenario::{Self};
     use std::debug::{Self as Debug};
     use suitrack::base::{Self as Track,
-    Service,
     ServiceTracker,
     Tracker,
     accounts_created
@@ -25,9 +24,6 @@ module suitrack::basetest {
         // second transaction to verify service and servicetracker created from init
         test_scenario::next_tx(&mut scenario_val, admin);
         {
-            let service = test_scenario::take_immutable<Service>(&mut scenario_val);
-            Debug::print(&service);
-            test_scenario::return_immutable(service);
             let strack = test_scenario::take_from_sender<ServiceTracker>(&mut scenario_val);
             assert!(accounts_created(&strack)==0,1);
             Debug::print(&strack);
@@ -37,17 +33,14 @@ module suitrack::basetest {
         // third transaction to create a new tracker account
         test_scenario::next_tx(&mut scenario_val, admin);
         {
-            let service = test_scenario::take_immutable<Service>(&mut scenario_val);
             let strack = test_scenario::take_from_address<ServiceTracker>(&mut scenario_val, admin);
             Track::create_account(
-                &service,
                 &mut strack,
                 user,
                 test_scenario::ctx(&mut scenario_val));
             assert!(accounts_created(&strack)==1,1);
             Debug::print(&strack);
             test_scenario::return_to_address(admin, strack);
-            test_scenario::return_immutable(service);
         };
         // Third step 2 Add both dynamic and dynamic object fields
         test_scenario::next_tx(&mut scenario_val, admin);

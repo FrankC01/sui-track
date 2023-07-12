@@ -4,6 +4,7 @@ version = "0.0.2"
 
 [dependencies]
 # Assuming the `sui` repository is at the same level as the package parent directory
+# Sui = { git = "https://github.com/MystenLabs/sui.git", subdir = "crates/sui-framework/packages/sui-framework", rev = "framework/testnet" }
 Sui = { local = "../../sui/crates/sui-framework/packages/sui-framework" }
 
 [addresses]
